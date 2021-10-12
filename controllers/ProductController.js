@@ -18,36 +18,38 @@ const createProduct = async(req, res, next) => {
         // --------------------------------------------------------------
         const docmentred = await firestore.collection('Product');
         // --------------------------------------------------------------
-        await docmentred.add(data);
-        const id = docmentred.id;
-        // --------------------------------------------------------------
-        await docmentred.doc(id).get().then((snapshot) => {
+        await docmentred.add(data).then((snapshot) => {
+            const id = snapshot.id;
+
             // --------------------------------------------------------------
-            if (snapshot.empty) {
+            docmentred.doc(id).get().then((snapshot) => {
                 // --------------------------------------------------------------
-                res.status(200).json({
-                    status: "Fails",
-                    msg: 'No record found',
-                });
-                // --------------------------------------------------------------
-            } else {
-                // --------------------------------------------------------------
-                const product = new Products(
-                    snapshot.id,
-                    snapshot.data().name,
-                    snapshot.data().quantity,
-                    snapshot.data().price_in,
-                    snapshot.data().price_out,
-                    snapshot.data().Payment,
-                    snapshot.data().status
-                );
-                // --------------------------------------------------------------
-                res.status(200).json({ status: "Success", msg: "Create product success !", dataObject: product });
-                // --------------------------------------------------------------
-            }
-        }).catch((err) => {
-            console.log(err);
-            res.send(err);
+                if (snapshot.empty) {
+                    // --------------------------------------------------------------
+                    res.status(200).json({
+                        status: "Fails",
+                        msg: 'No record found',
+                    });
+                    // --------------------------------------------------------------
+                } else {
+                    // --------------------------------------------------------------
+                    const product = new Products(
+                        snapshot.id,
+                        snapshot.data().name,
+                        snapshot.data().quantity,
+                        snapshot.data().price_in,
+                        snapshot.data().price_out,
+                        snapshot.data().Payment,
+                        snapshot.data().status
+                    );
+                    // --------------------------------------------------------------
+                    res.status(200).json({ status: "Success", msg: "Create product success !", dataObject: product });
+                    // --------------------------------------------------------------
+                }
+            }).catch((err) => {
+                console.log(err);
+                res.send(err);
+            });
         });
     } catch (error) {
         // --------------------------------------------------------------

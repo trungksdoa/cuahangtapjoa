@@ -15,35 +15,38 @@ const createAddress = async(req, res, next) => {
 
         const data = req.body;
 
-        const docmentred = await firestore.collection('Address').add(data);
+        const docmentred = await firestore.collection('Address');
 
-        const id = docmentred.id;
+        await docmentred.add(data).then((snapshot) => {
 
-        await docmentred.doc(id).get()
-            .then((snap) => {
-                // --------------------------------------------------------------
-                if (snap.empty) {
+            const id = snapshot.id;
+            docmentred.doc(id).get()
+                .then((snap) => {
                     // --------------------------------------------------------------
-                    res.status(404).json({ msg: 'No record found' });
-                    // --------------------------------------------------------------
-                } else {
-                    // --------------------------------------------------------------
-                    const Address = new Addresss(
-                        snap.id,
-                        snap.data().CusId,
-                        snap.data().Fullname,
-                        snap.data().PhoneNum,
-                        snap.data().Stage,
-                        snap.data().Address,
-                        snap.data().used
-                    );
-                    // --------------------------------------------------------------
-                    res.status(200).json({ status: "Success", msg: "Create Address success !", data: Address });
-                    // --------------------------------------------------------------
-                }
-            }).catch((err) => {
-                res.send(err);
-            });
+                    if (snap.empty) {
+                        // --------------------------------------------------------------
+                        res.status(404).json({ msg: 'No record found' });
+                        // --------------------------------------------------------------
+                    } else {
+                        // --------------------------------------------------------------
+                        const Address = new Addresss(
+                            snap.id,
+                            snap.data().CusId,
+                            snap.data().Fullname,
+                            snap.data().PhoneNum,
+                            snap.data().Stage,
+                            snap.data().Address,
+                            snap.data().used
+                        );
+                        // --------------------------------------------------------------
+                        res.status(200).json({ status: "Success", msg: "Create Address success !", data: Address });
+                        // --------------------------------------------------------------
+                    }
+                }).catch((err) => {
+                    res.send(err);
+                });
+        });
+
     } catch (error) {
 
         res.status(400).send(error.message);

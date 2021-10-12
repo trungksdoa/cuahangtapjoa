@@ -10,7 +10,7 @@ const auth = require("../middleware/auth");
 const { admin, user } = require("../middleware/roles");
 const router = express.Router();
 
-router.post('/product', [auth, admin], createProduct);
+router.post('/product', createProduct);
 // ----------------------------------------------------------------------
 
 router.get('/products', [auth, user], getAllProduct);

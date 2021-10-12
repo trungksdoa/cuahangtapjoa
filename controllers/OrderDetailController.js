@@ -17,27 +17,28 @@ const createOrderDetail = async(req, res, next) => {
         // --------------------------------------------------------------
         const docmentred = await firestore.collection('OrderDetail').add(data);
         // --------------------------------------------------------------
-        await docmentred.add(data);
-        const id = docmentred.id;
-        // --------------------------------------------------------------
-        await docmentred.doc(id).get().then((snapshot) => {
-            if (!snapshot.empty) {
-                // --------------------------------------------------------------
-                const OrderDetail = new OrderDetails(
-                    snapshot.id,
-                    snapshot.data().OrderID,
-                    snapshot.data().ItemOrder
-                );
-                // --------------------------------------------------------------
-                res.status(200).json({ status: "Success", msg: "Create OrderDetail success !", dataObject: OrderDetail });
-                // --------------------------------------------------------------
-            } else {
-                res.status(200).json({
-                    status: "Fails",
-                    msg: 'No record found',
-                });
-            }
-        }).catch((err) => { res.send(err) });
+        await docmentred.add(data).then((snapshot) => {
+            const id = snapshot.id;
+            // --------------------------------------------------------------
+            docmentred.doc(id).get().then((snapshot) => {
+                if (!snapshot.empty) {
+                    // --------------------------------------------------------------
+                    const OrderDetail = new OrderDetails(
+                        snapshot.id,
+                        snapshot.data().OrderID,
+                        snapshot.data().ItemOrder
+                    );
+                    // --------------------------------------------------------------
+                    res.status(200).json({ status: "Success", msg: "Create OrderDetail success !", dataObject: OrderDetail });
+                    // --------------------------------------------------------------
+                } else {
+                    res.status(200).json({
+                        status: "Fails",
+                        msg: 'No record found',
+                    });
+                }
+            }).catch((err) => { res.send(err) });
+        });
     } catch (error) {
         // --------------------------------------------------------------
         res.status(400).send(error.message);

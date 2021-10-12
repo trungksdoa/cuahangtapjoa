@@ -17,38 +17,40 @@ const createOrder = async(req, res, next) => {
         const docmentred = await firestore.collection('Order');
         // --------------------------------------------------------------
 
-        await docmentred.add(data);
+        await docmentred.add(data).then((snapshot) => {
+            const id = snapshot.id;
+            // --------------------------------------------------------------
+            docmentred.doc(id).get()
+                .then((snap) => {
+                    // --------------------------------------------------------------
+                    if (!snap.exists) {
+                        // --------------------------------------------------------------
+                        res.status(404).json({ status: "Fails", msg: 'No record found' });
+                        // --------------------------------------------------------------
+                    } else {
+                        // --------------------------------------------------------------
+                        const Order = new Orders(
+                            snap.id,
+                            snap.data().CusId,
+                            snap.data().ShipPhone,
+                            snap.data().ShipAddress,
+                            snap.data().ShipDate,
+                            snap.data().ShipNote,
+                            snap.data().OrderDate,
+                            snap.data().OrderState,
+                            snap.data().PaymentMethod,
+                            snap.data().ProcessStatus
+                        );
+                        // --------------------------------------------------------------
+                        res.status(200).json({ status: "Success", msg: "Create Order success !", dataObject: Order });
+                        // --------------------------------------------------------------
+                    }
+                }).catch((err) => {
+                    res.send(err);
+                });
+        });
 
-        const id = docmentred.id;
-        // --------------------------------------------------------------
-        await docmentred.doc(id).get()
-            .then((snap) => {
-                // --------------------------------------------------------------
-                if (!snap.exists) {
-                    // --------------------------------------------------------------
-                    res.status(404).json({ status: "Fails", msg: 'No record found' });
-                    // --------------------------------------------------------------
-                } else {
-                    // --------------------------------------------------------------
-                    const Order = new Orders(
-                        snap.id,
-                        snap.data().CusId,
-                        snap.data().ShipPhone,
-                        snap.data().ShipAddress,
-                        snap.data().ShipDate,
-                        snap.data().ShipNote,
-                        snap.data().OrderDate,
-                        snap.data().OrderState,
-                        snap.data().PaymentMethod,
-                        snap.data().ProcessStatus
-                    );
-                    // --------------------------------------------------------------
-                    res.status(200).json({ status: "Success", msg: "Create Order success !", dataObject: Order });
-                    // --------------------------------------------------------------
-                }
-            }).catch((err) => {
-                res.send(err);
-            });
+
     } catch (error) {
         // --------------------------------------------------------------
         res.status(400).send(error.message);
