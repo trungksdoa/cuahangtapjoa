@@ -39,7 +39,7 @@ const createAddress = async(req, res, next) => {
                             snap.data().used
                         );
                         // --------------------------------------------------------------
-                        res.status(200).json({ status: "Success", msg: "Create Address success !", data: Address });
+                        res.status(200).json({ status: "Success", msg: "Create Address success !", dataObject: Address });
                         // --------------------------------------------------------------
                     }
                 }).catch((err) => {
@@ -226,7 +226,7 @@ const GetAllDataBycus = async(req, res, next) => {
 
                     });
 
-                    res.status(200).json({ status: "Success", msg: "Get All Data Successfully", data: arraydata });
+                    res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: arraydata });
                 }
             }).catch((err) => {
                 res.send(err);
