@@ -11,7 +11,7 @@ const Config = require('../config');
 const jwt = require("jsonwebtoken");
 const express = require("express");
 const bcrypt = require("bcrypt");
-const Users = require('../models/user');
+const Users = require('..//models//User');
 const fs = require('fs');
 
 var iss = "VoHoangTrung";
