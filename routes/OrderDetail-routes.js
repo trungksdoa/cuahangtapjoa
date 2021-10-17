@@ -12,6 +12,8 @@ router.get('/Orderdetails', orderdetail.getAllOrderDetail);
 
 router.get('/Orderdetail/:id', orderdetail.getOneOrderDetail);
 // ----------------------------------------------------------------------
+router.get('/OrderdetailByOrder/:OrderID', orderdetail.getOneOrderDetailByOrder);
+// ----------------------------------------------------------------------
 
 router.put('/Orderdetail/:id', orderdetail.UpdateOrderDetail);
 // ----------------------------------------------------------------------

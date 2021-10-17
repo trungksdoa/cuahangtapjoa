@@ -19,7 +19,16 @@ router.get('/getAllByCus/:id', address.GetAllDataBycus);
 
 // ----------------------------------------------------------------------
 
+router.get('/getUsedAddress/', address.getUsedAddress);
+
+// ----------------------------------------------------------------------
+
 router.put('/Address/:id', address.UpdateAddress);
+
+// ----------------------------------------------------------------------
+
+router.put('/Address/:id/:userId', address.UsedAddress);
+
 // ----------------------------------------------------------------------
 
 router.delete('/Address/:id', address.deleteAddress);

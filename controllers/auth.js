@@ -71,7 +71,7 @@ const Login = async(req, res, next) => {
         await firestore.collection('User').where('email', '==', email).get()
             .then((snapshot) => {
                 if (snapshot.empty) {
-                    res.status(404).json({ status: "Fails", msg: 'No record found' });
+                    return res.status(404).json({ status: "Fails", msg: 'Login fails,No account found' });
                 } else {
                     let user = "";
                     snapshot.forEach((doc) => {
@@ -147,9 +147,7 @@ const Login = async(req, res, next) => {
                         var token = jwt.sign(payload, privateTKKey, signOption3);
 
                         const Refreshtoken = jwt.sign(payload, privateRfKey, signOption4);
-
-                        let date_ob = new Date();
-                        return res.status(200).json({
+                        const requestDatas = {
                             id: data_when_parse.id,
                             status: "Success",
                             msg: "Welcome back my Boss ,Have a nine day",
@@ -157,12 +155,15 @@ const Login = async(req, res, next) => {
                             Refreshtoken: Refreshtoken,
                             username: Username,
                             email: email,
-                        });
+                            Roles: "admin"
+                        };
+                        let date_ob = new Date();
+                        return res.status(200).json({ status: "Success", msg: "Login success !", dataObject: requestDatas });
                     }
                     var token = jwt.sign(payload, privateTKKey, signOption);
 
                     const Refreshtoken = jwt.sign(payload, privateRfKey, signOption2);
-                    return res.status(200).json({
+                    const requestDatas = {
                         id: data_when_parse.id,
                         status: "Success",
                         msg: "Welcome back user ,Have a nine day",
@@ -170,18 +171,18 @@ const Login = async(req, res, next) => {
                         Refreshtoken: Refreshtoken,
                         username: Username,
                         email: email,
-                    });
+                        Roles: "user"
+                    };
+                    return res.status(200).json({ status: "Success", msg: "Login success !", dataObject: requestDatas });
                 }
             })
             .catch((err) => {
                 console.log('Error getting documents', err);
-                res.send(err);
+                return res.send(err);
             });
 
     } catch (error) {
-
-        res.status(400).send(error.message);
-
+        return res.status(400).send(error.message);
     }
 };
 
@@ -193,7 +194,7 @@ const Register = async(req, res, next) => {
 
         await firestore.collection('User').where('email', '==', data.email).get().then(async(snapshot) => {
             if (!snapshot.empty) {
-                res.status(200).json({
+                return res.status(200).json({
                     status: "Fails",
                     msg: "Email already exists in system",
                 });
@@ -222,11 +223,11 @@ const Register = async(req, res, next) => {
             }
         }).catch((err) => {
             console.log(err)
-            res.send(err);
+            return res.send(err);
         });
     } catch (error) {
 
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
 
     }
 };
@@ -264,7 +265,7 @@ const RequestToken = async(req, res, next) => {
         });
     } catch (error) {
 
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
 
     }
 };
@@ -277,7 +278,7 @@ const FindALl = async(req, res, next) => {
         await firestore.collection('User').get()
             .then((snapshot) => {
                 if (snapshot.empty) {
-                    res.status(200).json({
+                    return res.status(200).json({
                         status: "Fails",
                         msg: 'No record found',
                     });
@@ -293,18 +294,18 @@ const FindALl = async(req, res, next) => {
                         );
                         useraray.push(user);
                     });
-                    res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: useraray });
+                    return res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: useraray });
                 }
             })
             .catch((err) => {
                 console.log('Error getting documents', err);
-                res.send(err);
+                return res.send(err);
             });
 
 
     } catch (error) {
 
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
 
     }
 };
@@ -320,7 +321,7 @@ const getOne = async(req, res, next) => {
             // --------------------------------------------------------------
             if (snapshot.empty) {
                 // --------------------------------------------------------------
-                res.status(200).json({
+                return res.status(200).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
@@ -335,17 +336,17 @@ const getOne = async(req, res, next) => {
                     snapshot.data().dateCreated,
                 );
                 // --------------------------------------------------------------
-                res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: User });
+                return res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: User });
                 // --------------------------------------------------------------
             }
         }).catch((err) => {
             console.log(err);
-            res.send(err);
+            return res.send(err);
         });
 
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };
@@ -361,7 +362,7 @@ const update = async(req, res, next) => {
             // --------------------------------------------------------------
             if (snapshot.empty) {
                 // --------------------------------------------------------------
-                res.status(200).json({
+                return res.status(200).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
@@ -369,17 +370,17 @@ const update = async(req, res, next) => {
             } else {
                 users.update(data);
                 // --------------------------------------------------------------
-                res.status(200).json({ status: "Success", msg: "Update record with ID:  " + id + "" });
+                return res.status(200).json({ status: "Success", msg: "Update record with ID:  " + id + "" });
                 // --------------------------------------------------------------
             }
         }).catch((err) => {
             console.log(err);
-            res.send(err);
+            return res.send(err);
         });
 
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };
@@ -393,7 +394,7 @@ const deletes = async(req, res, next) => {
             // --------------------------------------------------------------
             if (snapshot.empty) {
                 // --------------------------------------------------------------
-                res.status(200).json({
+                return res.status(200).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
@@ -401,17 +402,17 @@ const deletes = async(req, res, next) => {
             } else {
                 users.delete();
                 // --------------------------------------------------------------
-                res.status(200).json({ status: "Success", msg: "Delete record with ID:  " + id + "" });
+                return res.status(200).json({ status: "Success", msg: "Delete record with ID:  " + id + "" });
                 // --------------------------------------------------------------
             }
         }).catch((err) => {
             console.log(err);
-            res.send(err);
+            return res.send(err);
         });
 
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };

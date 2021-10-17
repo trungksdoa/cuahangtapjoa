@@ -24,9 +24,9 @@ const createProduct = async(req, res, next) => {
             // --------------------------------------------------------------
             docmentred.doc(id).get().then((snapshot) => {
                 // --------------------------------------------------------------
-                if (snapshot.empty) {
+                if (!snapshot.exists) {
                     // --------------------------------------------------------------
-                    res.status(200).json({
+                    return res.status(404).json({
                         status: "Fails",
                         msg: 'No record found',
                     });
@@ -43,17 +43,17 @@ const createProduct = async(req, res, next) => {
                         snapshot.data().status
                     );
                     // --------------------------------------------------------------
-                    res.status(200).json({ status: "Success", msg: "Create product success !", dataObject: product });
+                    return res.status(200).json({ status: "Success", msg: "Create product success !", dataObject: product });
                     // --------------------------------------------------------------
                 }
             }).catch((err) => {
                 console.log(err);
-                res.send(err);
+                return res.send(err);
             });
         });
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };
@@ -66,7 +66,7 @@ const getAllProduct = async(req, res, next) => {
         // --------------------------------------------------------------
         await Product.get().then((snapp) => {
             if (snapp.empty) {
-                res.status(200).json({
+                return res.status(404).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
@@ -89,16 +89,16 @@ const getAllProduct = async(req, res, next) => {
                     // --------------------------------------------------------------
                 });
                 // --------------------------------------------------------------
-                res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: ProductArray });
+                return res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: ProductArray });
             }
         }).catch((err) => {
             console.log(err);
-            res.send(err);
+            return res.send(err);
         });
         // --------------------------------------------------------------
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };
@@ -112,8 +112,8 @@ const getOneProduct = async(req, res, next) => {
         const product = await firestore.collection('Product').doc(id);
         // --------------------------------------------------------------
         const data = await product.get().then((snapp) => {
-            if (snapp.empty) {
-                res.status(200).json({
+            if (!snapp.exists) {
+                return res.status(404).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
@@ -128,15 +128,15 @@ const getOneProduct = async(req, res, next) => {
                     snapp.data().status
                 );
                 // --------------------------------------------------------------
-                res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: product });
+                return res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: product });
             }
         }).catch((err) => {
             console.log(err);
-            res.send(err);
+            return res.send(err);
         });
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };
@@ -152,9 +152,9 @@ const UpdateProduct = async(req, res, next) => {
         // --------------------------------------------------------------
         await ducks.get().then((snapshot) => {
             // --------------------------------------------------------------
-            if (snapshot.empty) {
+            if (!snapshot.exists) {
                 // --------------------------------------------------------------
-                res.status(200).json({
+                return res.status(404).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
@@ -162,16 +162,16 @@ const UpdateProduct = async(req, res, next) => {
             } else {
                 ducks.update(data);
                 // --------------------------------------------------------------
-                res.status(200).json({ status: "Success", msg: "Update record with ID:  " + id + "" });
+                return res.status(200).json({ status: "Success", msg: "Update record with ID:  " + id + "" });
                 // --------------------------------------------------------------
             }
         }).catch((err) => {
             console.log(err);
-            res.send(err);
+            return res.send(err);
         });
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
     // --------------------------------------------------------------
@@ -186,23 +186,23 @@ const deleteProduct = async(req, res, next) => {
         const datas2 = await firestore.collection('Product').doc(id)
         await datas2.get()
             .then((snapp) => {
-                if (!snapp.empty) {
+                if (snapp.exists) {
                     datas2.delete();
                     // --------------------------------------------------------------
-                    res.status(200).json({ status: "Success", msg: "Delete record with ID:  " + id + "" });
+                    return res.status(200).json({ status: "Success", msg: "Delete record with ID:  " + id + "" });
                 } else {
-                    res.status(200).json({
+                    return res.status(404).json({
                         status: "Fails",
                         msg: 'No record found',
                     });
                 }
             }).catch((err) => {
-                res.send(err);
+                return res.send(err);
             });
         // --------------------------------------------------------------
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };

@@ -14,46 +14,54 @@ const createOrder = async(req, res, next) => {
         // --------------------------------------------------------------
         const data = req.body;
         // --------------------------------------------------------------
-        const docmentred = await firestore.collection('Order');
         // --------------------------------------------------------------
 
-        await docmentred.add(data).then((snapshot) => {
-            const id = snapshot.id;
-            // --------------------------------------------------------------
-            docmentred.doc(id).get()
-                .then((snap) => {
-                    // --------------------------------------------------------------
-                    if (!snap.exists) {
-                        // --------------------------------------------------------------
-                        res.status(404).json({ status: "Fails", msg: 'No record found' });
-                        // --------------------------------------------------------------
-                    } else {
-                        // --------------------------------------------------------------
-                        const Order = new Orders(
-                            snap.id,
-                            snap.data().CusId,
-                            snap.data().ShipPhone,
-                            snap.data().ShipAddress,
-                            snap.data().ShipDate,
-                            snap.data().ShipNote,
-                            snap.data().OrderDate,
-                            snap.data().OrderState,
-                            snap.data().PaymentMethod,
-                            snap.data().ProcessStatus
-                        );
-                        // --------------------------------------------------------------
-                        res.status(200).json({ status: "Success", msg: "Create Order success !", dataObject: Order });
-                        // --------------------------------------------------------------
-                    }
-                }).catch((err) => {
-                    res.send(err);
-                });
+        var OrderID = 0;
+        await firestore.collection("Order").get().then(function(querySnapshot) {
+            OrderID = querySnapshot.size + 1;
         });
+        var documents = await firestore.collection('Order')
+            .doc("" + OrderID + "")
+            .set(data)
+            .then(() => {
+                // // --------------------------------------------------------------
+                console.log(OrderID);
+                var test = firestore.collection('Order')
+                    .doc("" + OrderID + "")
+                    .get()
+                    .then((snap) => {
+                        // --------------------------------------------------------------
+                        if (!snap.exists) {
+                            // --------------------------------------------------------------
+                            return res.status(404).json({ status: "Fails", msg: 'No record found' });
+                            // --------------------------------------------------------------
+                        } else {
+                            // --------------------------------------------------------------
+                            const Order = new Orders(
+                                snap.id,
+                                snap.data().CusId,
+                                snap.data().ShipPhone,
+                                snap.data().ShipAddress,
+                                snap.data().ShipDate,
+                                snap.data().ShipNote,
+                                snap.data().OrderDate,
+                                snap.data().OrderState,
+                                snap.data().PaymentMethod,
+                                snap.data().ProcessStatus
+                            );
+                            // --------------------------------------------------------------
+                            return res.status(200).json({ status: "Success", msg: "Create Order success !", dataObject: Order });
+                            // --------------------------------------------------------------
+                        }
+                    }).catch((err) => {
+                        return res.send(err);
+                    });
+            });
 
 
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };
@@ -68,7 +76,7 @@ const getAllOrder = async(req, res, next) => {
             // --------------------------------------------------------------
             if (snap.empty) {
                 // --------------------------------------------------------------
-                res.status(404).json({ status: "Fails", msg: 'No record found' });
+                return res.status(404).json({ status: "Fails", msg: 'No record found' });
                 // --------------------------------------------------------------
             } else {
                 const OrderArray = [];
@@ -92,16 +100,16 @@ const getAllOrder = async(req, res, next) => {
                     // --------------------------------------------------------------
                 });
                 // --------------------------------------------------------------
-                res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: OrderArray });
+                return res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: OrderArray });
             }
         }).catch((err) => {
-            res.send(err);
+            return res.send(err);
         });
         // --------------------------------------------------------------
         // --------------------------------------------------------------
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };
@@ -117,7 +125,7 @@ const getOneOrder = async(req, res, next) => {
             // --------------------------------------------------------------
             if (!snapshot.exists) {
                 // --------------------------------------------------------------
-                res.status(404).json({
+                return res.status(404).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
@@ -136,17 +144,17 @@ const getOneOrder = async(req, res, next) => {
                     snapshot.data().ProcessStatus
                 );
                 // --------------------------------------------------------------
-                res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: Order });
+                return res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: Order });
                 // --------------------------------------------------------------
             }
         }).catch((err) => {
             console.log(err);
-            res.send(err);
+            return res.send(err);
         });
         // --------------------------------------------------------------
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };
@@ -163,14 +171,14 @@ const UpdateOrder = async(req, res, next) => {
         await Order.get().then((snapshot) => {
             if (snapshot.exists) {
                 Order.update(data);
-                res.status(200).json({ status: "Success", msg: 'Record updated successfuly' });
+                return res.status(200).json({ status: "Success", msg: 'Record updated successfuly' });
             } else {
-                res.status(404).json({ status: "Fails", msg: 'No record found' });
+                return res.status(404).json({ status: "Fails", msg: 'No record found' });
             }
-        }).catch((err) => { res.send(err) });
+        }).catch((err) => { return res.send(err) });
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
     // --------------------------------------------------------------
@@ -187,15 +195,15 @@ const deleteOrder = async(req, res, next) => {
         await Order.get().then((snapshot) => {
             if (snapshot.exists) {
                 Order.delete();
-                res.status(200).json({ status: "Success", msg: 'Delete Record successfuly' });
+                return res.status(200).json({ status: "Success", msg: 'Delete Record successfuly' });
             } else {
-                res.status(404).json({ status: "Fails", msg: 'No record found' });
+                return res.status(404).json({ status: "Fails", msg: 'No record found' });
             }
-        }).catch((err) => { res.send(err) });
+        }).catch((err) => { return res.send(err) });
         // --------------------------------------------------------------
     } catch (error) {
         // --------------------------------------------------------------
-        res.status(400).send(error.message);
+        return res.status(400).send(error.message);
         // --------------------------------------------------------------
     }
 };
