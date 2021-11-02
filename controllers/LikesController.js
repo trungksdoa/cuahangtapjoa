@@ -4,32 +4,25 @@ const firebase = require('../db');
 // --------------------------------------------------------------
 const firebase_admin = require('../db_admin');
 // --------------------------------------------------------------
-const Products = require('../models/Product');
-
-const { v4: uuidv4 } = require('uuid');
-
+const Likes = require('../models/Likes');
+const Testobject = require('../models/TestiObject');
 // const firestore = firebase.firestore();
 // --------------------------------------------------------------
 const firestore = firebase_admin.firestore();
+
+const { v4: uuidv4 } = require('uuid');
 // --------------------------------------------------------------
-function CreateObject(snapshot) {
-    return new Products(
-        snapshot.id,
-        snapshot.data().name,
-        snapshot.data().quantity,
-        snapshot.data().price_in,
-        snapshot.data().price_out,
-        snapshot.data().Catagory,
-        snapshot.data().Payment,
-        snapshot.data().status,
-        snapshot.data().discount,
-        snapshot.data().date_add
+function CreateObject(data) {
+    return new Likes(
+        data.id,
+        data.data().CusId,
+        data.data().productId,
     );
 }
 
 function CheckExis(key) {
     let array = [];
-    firestore.collection('Product').get((doc) => {
+    firestore.collection('Likes').get((doc) => {
         if (!doc.empty) {
             doc.forEach(docs => {
                 array.push(docs.id);
@@ -38,31 +31,19 @@ function CheckExis(key) {
         }
     });
 }
-
-const createProduct = async(req, res, next) => {
+const CreateLikes = async(req, res, next) => {
 
     try {
         // --------------------------------------------------------------
         const data = req.body;
         // --------------------------------------------------------------
-        const docmentred = await firestore.collection('Product');
-        var request = {
-            name: data.name,
-            quantity: data.quantity,
-            price_in: data.price_in,
-            price_out: data.price_out,
-            Catagory: data.Catagory,
-            Payment: data.Payment,
-            status: data.status,
-            discount: data.discount,
-            date_add: new Date().toLocaleDateString()
-        }
+        const docmentred = await firestore.collection('Likes');
         let uuid = uuidv4();
         while (CheckExis(uuid)) {
             uuid = uuidv4();
         }
         // --------------------------------------------------------------
-        await docmentred.doc(uuid).set(request).then(() => {
+        await docmentred.doc(uuid).set(data).then((snapshot) => {
             // --------------------------------------------------------------
             docmentred.doc(uuid).get().then((snapshot) => {
                 // --------------------------------------------------------------
@@ -75,9 +56,9 @@ const createProduct = async(req, res, next) => {
                     // --------------------------------------------------------------
                 } else {
                     // --------------------------------------------------------------
-                    const product = CreateObject(snapshot);
+                    const Like = CreateObject(snapshot);
                     // --------------------------------------------------------------
-                    return res.status(200).json({ status: "Success", msg: "Create product success !", dataObject: product });
+                    return res.status(200).json({ status: "Success", msg: "Create Like success !", dataObject: Like });
                     // --------------------------------------------------------------
                 }
             }).catch((err) => {
@@ -92,66 +73,37 @@ const createProduct = async(req, res, next) => {
     }
 };
 // --------------------------------------------------------------
-const getAllProduct = async(req, res, next) => {
+const getAllLikeByCus = async(req, res, next) => {
     try {
+        const cusId = req.params.cusId;
         // --------------------------------------------------------------
-        const Product = await firestore.collection('Product');
+        const Like = await firestore.collection('Likes');
         // ------------------------------------------------------
         // --------------------------------------------------------------
-        await Product.get().then((snapp) => {
+        await Like.where('CusId', "==", cusId).get().then((snapp) => {
             if (snapp.empty) {
                 return res.status(404).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
             } else {
-                const ProductArray = [];
+                const LikeArray = [];
                 // --------------------------------------------------------------
                 snapp.forEach(doc => {
                     // --------------------------------------------------------------
-                    const product = CreateObject(doc);
+                    const Like = CreateObject(doc);
                     // --------------------------------------------------------------
-                    ProductArray.push(product);
+                    LikeArray.push(Like);
                     // --------------------------------------------------------------
                 });
                 // --------------------------------------------------------------
-                return res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: ProductArray });
+                return res.status(200).json({ status: "Success", msg: "Get Data Successfully", dataList: LikeArray });
             }
         }).catch((err) => {
             console.log(err);
             return res.send(err);
         });
         // --------------------------------------------------------------
-    } catch (error) {
-        // --------------------------------------------------------------
-        return res.status(400).send(error.message);
-        // --------------------------------------------------------------
-    }
-};
-// --------------------------------------------------------------
-// --------------------------------------------------------------
-const getOneProduct = async(req, res, next) => {
-    try {
-        // --------------------------------------------------------------
-        const id = req.params.id;
-        // --------------------------------------------------------------
-        const product = await firestore.collection('Product').doc(id);
-        // --------------------------------------------------------------
-        const data = await product.get().then((snapp) => {
-            if (!snapp.exists) {
-                return res.status(404).json({
-                    status: "Fails",
-                    msg: 'No record found',
-                });
-            } else {
-                const product = CreateObject(snapp);
-                // --------------------------------------------------------------
-                return res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: product });
-            }
-        }).catch((err) => {
-            console.log(err);
-            return res.send(err);
-        });
     } catch (error) {
         // --------------------------------------------------------------
         return res.status(400).send(error.message);
@@ -160,25 +112,93 @@ const getOneProduct = async(req, res, next) => {
 };
 
 // --------------------------------------------------------------
-const getProductByCata = async(req, res, next) => {
+const getAllMostLike = async(req, res, next) => {
     try {
+
+        // const cusId = req.params.cusId;
         // --------------------------------------------------------------
-        const cata = req.params.cataId;
+        const Like = await firestore.collection('Likes');
+        // ------------------------------------------------------
         // --------------------------------------------------------------
-        await firestore.collection('Product').where('Catagory', "==", cata).get().then((snapp) => {
+        await Like.get().then((snapp) => {
             if (snapp.empty) {
                 return res.status(404).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
             } else {
-                const ProductArray = [];
+                const LikeArray = [];
+                // --------------------------------------------------------------
                 snapp.forEach(doc => {
-                    const product = CreateObject(doc);
-                    ProductArray.push(product);
+                    // --------------------------------------------------------------
+                    LikeArray.push(doc.data().productId);
+                    // --------------------------------------------------------------
+                });
+                // var counts = LikeArray.reduce((map, val) => { map[val] = (map[val] || 0) + 1; return map }, {});
+                LikeArray.sort();
+                let newArrays = [];
+                var current = null;
+                var cnt = 0;
+                for (var i = 0; i < LikeArray.length; i++) {
+                    if (LikeArray[i] != current) {
+                        if (cnt > 0) {
+                            var newDatas = new Testobject(
+                                current, cnt
+                            );
+                            newArrays.push(newDatas);
+                        }
+                        current = LikeArray[i];
+                        cnt = 1;
+                    } else {
+                        cnt++;
+                    }
+                }
+                var newDatass = new Testobject(
+                    current, cnt
+                );
+                newArrays.push(newDatass);
+                // var newDatas = new Testobject(
+                //     current, cnt
+                // );
+                // let findDuplicates = arr => arr.filter((item, index) => arr.indexOf(item) != index);
+                return res.status(200).json({ status: "Success", msg: "Get Data Successfully", dataList: newArrays });
+                // --------------------------------------------------------------
+                // return res.status(200).json({ status: "Success", msg: "Get Data Successfully", dataList: LikeArray });
+            }
+        }).catch((err) => {
+            console.log(err);
+            return res.send(err);
+        });
+        // --------------------------------------------------------------
+    } catch (error) {
+        // --------------------------------------------------------------
+        return res.status(400).send(error.message);
+        // --------------------------------------------------------------
+    }
+};
+// --------------------------------------------------------------
+const getOneLike = async(req, res, next) => {
+    try {
+        // --------------------------------------------------------------
+        const id = req.params.id;
+        // --------------------------------------------------------------
+        const Like = await firestore.collection('Likes').where("productId", "==", id);
+        // --------------------------------------------------------------
+        const data = await Like.get().then((snapp) => {
+            if (snapp.empty) {
+                return res.status(404).json({
+                    status: "Fails",
+                    msg: 'No record found',
+                });
+            } else {
+                let Like = null;
+                snapp.forEach(doc => {
+                    // --------------------------------------------------------------
+                    Like = CreateObject(doc);
+                    // --------------------------------------------------------------
                 });
                 // --------------------------------------------------------------
-                return res.status(200).json({ status: "Success", msg: "Found Success", dataList: ProductArray });
+                return res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: Like });
             }
         }).catch((err) => {
             console.log(err);
@@ -191,14 +211,14 @@ const getProductByCata = async(req, res, next) => {
     }
 };
 // --------------------------------------------------------------
-const UpdateProduct = async(req, res, next) => {
+const UpdateLike = async(req, res, next) => {
     try {
         // --------------------------------------------------------------
         const id = req.params.id;
         // --------------------------------------------------------------
         const data = req.body;
         // --------------------------------------------------------------
-        const ducks = await firestore.collection('Product').doc(id);
+        const ducks = await firestore.collection('Likes').doc(id);
         // --------------------------------------------------------------
         await ducks.get().then((snapshot) => {
             // --------------------------------------------------------------
@@ -226,19 +246,25 @@ const UpdateProduct = async(req, res, next) => {
     }
     // --------------------------------------------------------------
 };
+
 // --------------------------------------------------------------
-const deleteProduct = async(req, res, next) => {
+const deleteLike = async(req, res, next) => {
     try {
         // --------------------------------------------------------------
         const id = req.params.id;
         // --------------------------------------------------------------
-        const datas2 = await firestore.collection('Product').doc(id)
+        const datas2 = await firestore.collection('Likes').where("productId", "==", id);
         await datas2.get()
             .then((snapp) => {
-                if (snapp.exists) {
-                    datas2.delete();
+                if (!snapp.empty) {
+                    let newId = null;
+                    snapp.forEach(doc => {
+                        newId = doc.id;
+                    });
+                    firestore.collection('Likes').doc(newId).delete().then(() => {
+                        return res.status(200).json({ status: "Success", msg: "Delete record with ID:  " + id + "" });
+                    });
                     // --------------------------------------------------------------
-                    return res.status(200).json({ status: "Success", msg: "Delete record with ID:  " + id + "" });
                 } else {
                     return res.status(404).json({
                         status: "Fails",
@@ -255,7 +281,7 @@ const deleteProduct = async(req, res, next) => {
         // --------------------------------------------------------------
     }
 };
-// const observer = firestore.collection('Product').onSnapshot(docSnapshot => {
+// const observer = firestore.collection('Like').onSnapshot(docSnapshot => {
 //     let changes = docSnapshot.docChanges();
 //     changes.forEach(change => {
 //             console.log(change.doc.data());
@@ -266,16 +292,10 @@ const deleteProduct = async(req, res, next) => {
 // });
 module.exports = {
     // --------------------------------------------------------------
-    createProduct,
-    // --------------------------------------------------------------
-    getAllProduct,
-    // --------------------------------------------------------------
-    getOneProduct,
-
-    getProductByCata,
-    // --------------------------------------------------------------
-    UpdateProduct,
-    // --------------------------------------------------------------
-    deleteProduct
+    CreateLikes,
+    getAllLikeByCus,
+    deleteLike,
+    getOneLike,
+    getAllMostLike
     // --------------------------------------------------------------
 };

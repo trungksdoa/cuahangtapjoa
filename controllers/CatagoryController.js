@@ -4,32 +4,24 @@ const firebase = require('../db');
 // --------------------------------------------------------------
 const firebase_admin = require('../db_admin');
 // --------------------------------------------------------------
-const Products = require('../models/Product');
-
-const { v4: uuidv4 } = require('uuid');
-
+const Catagorys = require('../models/Catagory');
 // const firestore = firebase.firestore();
 // --------------------------------------------------------------
 const firestore = firebase_admin.firestore();
+
+const { v4: uuidv4 } = require('uuid');
 // --------------------------------------------------------------
-function CreateObject(snapshot) {
-    return new Products(
-        snapshot.id,
-        snapshot.data().name,
-        snapshot.data().quantity,
-        snapshot.data().price_in,
-        snapshot.data().price_out,
-        snapshot.data().Catagory,
-        snapshot.data().Payment,
-        snapshot.data().status,
-        snapshot.data().discount,
-        snapshot.data().date_add
+function CreateObject(data) {
+    return new Catagorys(
+        data.id,
+        data.data().CataName,
+        data.data().active
     );
 }
 
 function CheckExis(key) {
     let array = [];
-    firestore.collection('Product').get((doc) => {
+    firestore.collection('Catagory').get((doc) => {
         if (!doc.empty) {
             doc.forEach(docs => {
                 array.push(docs.id);
@@ -38,33 +30,18 @@ function CheckExis(key) {
         }
     });
 }
-
-const createProduct = async(req, res, next) => {
+const createCatagory = async(req, res, next) => {
 
     try {
         // --------------------------------------------------------------
         const data = req.body;
         // --------------------------------------------------------------
-        const docmentred = await firestore.collection('Product');
-        var request = {
-            name: data.name,
-            quantity: data.quantity,
-            price_in: data.price_in,
-            price_out: data.price_out,
-            Catagory: data.Catagory,
-            Payment: data.Payment,
-            status: data.status,
-            discount: data.discount,
-            date_add: new Date().toLocaleDateString()
-        }
-        let uuid = uuidv4();
-        while (CheckExis(uuid)) {
-            uuid = uuidv4();
-        }
+        const docmentred = await firestore.collection('Catagory');
         // --------------------------------------------------------------
-        await docmentred.doc(uuid).set(request).then(() => {
+        await docmentred.add(data).then((snaps) => {
+            const id = snaps.id;
             // --------------------------------------------------------------
-            docmentred.doc(uuid).get().then((snapshot) => {
+            docmentred.doc(id).get().then((snapshot) => {
                 // --------------------------------------------------------------
                 if (!snapshot.exists) {
                     // --------------------------------------------------------------
@@ -75,9 +52,9 @@ const createProduct = async(req, res, next) => {
                     // --------------------------------------------------------------
                 } else {
                     // --------------------------------------------------------------
-                    const product = CreateObject(snapshot);
+                    let catagory = CreateObject(snapshot);
                     // --------------------------------------------------------------
-                    return res.status(200).json({ status: "Success", msg: "Create product success !", dataObject: product });
+                    return res.status(200).json({ status: "Success", msg: "Create Catagory success !", dataObject: catagory });
                     // --------------------------------------------------------------
                 }
             }).catch((err) => {
@@ -92,30 +69,30 @@ const createProduct = async(req, res, next) => {
     }
 };
 // --------------------------------------------------------------
-const getAllProduct = async(req, res, next) => {
+const getAllcatagory = async(req, res, next) => {
     try {
         // --------------------------------------------------------------
-        const Product = await firestore.collection('Product');
+        const Catagory = await firestore.collection('Catagory');
         // ------------------------------------------------------
         // --------------------------------------------------------------
-        await Product.get().then((snapp) => {
+        await Catagory.get().then((snapp) => {
             if (snapp.empty) {
                 return res.status(404).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
             } else {
-                const ProductArray = [];
+                const CatagoryArray = [];
                 // --------------------------------------------------------------
                 snapp.forEach(doc => {
                     // --------------------------------------------------------------
-                    const product = CreateObject(doc);
+                    let catagory = CreateObject(doc);
                     // --------------------------------------------------------------
-                    ProductArray.push(product);
+                    CatagoryArray.push(catagory);
                     // --------------------------------------------------------------
                 });
                 // --------------------------------------------------------------
-                return res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: ProductArray });
+                return res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: CatagoryArray });
             }
         }).catch((err) => {
             console.log(err);
@@ -129,56 +106,24 @@ const getAllProduct = async(req, res, next) => {
     }
 };
 // --------------------------------------------------------------
-// --------------------------------------------------------------
-const getOneProduct = async(req, res, next) => {
+const getOneCatagory = async(req, res, next) => {
     try {
         // --------------------------------------------------------------
         const id = req.params.id;
+
         // --------------------------------------------------------------
-        const product = await firestore.collection('Product').doc(id);
+        const Catagory = await firestore.collection('Catagory').doc(id);
         // --------------------------------------------------------------
-        const data = await product.get().then((snapp) => {
+        const data = await Catagory.get().then((snapp) => {
             if (!snapp.exists) {
                 return res.status(404).json({
                     status: "Fails",
                     msg: 'No record found',
                 });
             } else {
-                const product = CreateObject(snapp);
+                let Catagory = CreateObject(snapp);
                 // --------------------------------------------------------------
-                return res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: product });
-            }
-        }).catch((err) => {
-            console.log(err);
-            return res.send(err);
-        });
-    } catch (error) {
-        // --------------------------------------------------------------
-        return res.status(400).send(error.message);
-        // --------------------------------------------------------------
-    }
-};
-
-// --------------------------------------------------------------
-const getProductByCata = async(req, res, next) => {
-    try {
-        // --------------------------------------------------------------
-        const cata = req.params.cataId;
-        // --------------------------------------------------------------
-        await firestore.collection('Product').where('Catagory', "==", cata).get().then((snapp) => {
-            if (snapp.empty) {
-                return res.status(404).json({
-                    status: "Fails",
-                    msg: 'No record found',
-                });
-            } else {
-                const ProductArray = [];
-                snapp.forEach(doc => {
-                    const product = CreateObject(doc);
-                    ProductArray.push(product);
-                });
-                // --------------------------------------------------------------
-                return res.status(200).json({ status: "Success", msg: "Found Success", dataList: ProductArray });
+                return res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: Catagory });
             }
         }).catch((err) => {
             console.log(err);
@@ -191,14 +136,14 @@ const getProductByCata = async(req, res, next) => {
     }
 };
 // --------------------------------------------------------------
-const UpdateProduct = async(req, res, next) => {
+const UpdateCatagory = async(req, res, next) => {
     try {
         // --------------------------------------------------------------
         const id = req.params.id;
         // --------------------------------------------------------------
         const data = req.body;
         // --------------------------------------------------------------
-        const ducks = await firestore.collection('Product').doc(id);
+        const ducks = await firestore.collection('Catagory').doc(id);
         // --------------------------------------------------------------
         await ducks.get().then((snapshot) => {
             // --------------------------------------------------------------
@@ -226,13 +171,14 @@ const UpdateProduct = async(req, res, next) => {
     }
     // --------------------------------------------------------------
 };
+
 // --------------------------------------------------------------
-const deleteProduct = async(req, res, next) => {
+const deleteCatagory = async(req, res, next) => {
     try {
         // --------------------------------------------------------------
         const id = req.params.id;
         // --------------------------------------------------------------
-        const datas2 = await firestore.collection('Product').doc(id)
+        const datas2 = await firestore.collection('Catagory').doc(id)
         await datas2.get()
             .then((snapp) => {
                 if (snapp.exists) {
@@ -255,7 +201,7 @@ const deleteProduct = async(req, res, next) => {
         // --------------------------------------------------------------
     }
 };
-// const observer = firestore.collection('Product').onSnapshot(docSnapshot => {
+// const observer = firestore.collection('Catagory').onSnapshot(docSnapshot => {
 //     let changes = docSnapshot.docChanges();
 //     changes.forEach(change => {
 //             console.log(change.doc.data());
@@ -266,16 +212,14 @@ const deleteProduct = async(req, res, next) => {
 // });
 module.exports = {
     // --------------------------------------------------------------
-    createProduct,
+    createCatagory,
     // --------------------------------------------------------------
-    getAllProduct,
+    getAllcatagory,
     // --------------------------------------------------------------
-    getOneProduct,
-
-    getProductByCata,
+    getOneCatagory,
     // --------------------------------------------------------------
-    UpdateProduct,
+    UpdateCatagory,
     // --------------------------------------------------------------
-    deleteProduct
+    deleteCatagory
     // --------------------------------------------------------------
 };

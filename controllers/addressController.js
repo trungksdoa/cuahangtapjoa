@@ -8,7 +8,31 @@ const Addresss = require('../models/Address');
 // const firestore = firebase.firestore();
 
 const firestore = firebase_admin.firestore();
+const { v4: uuidv4 } = require('uuid');
 
+function CreateObject(data) {
+    return new Addresss(
+        data.id,
+        data.data().CusId,
+        data.data().Fullname,
+        data.data().PhoneNum,
+        data.data().Stage,
+        data.data().Address,
+        data.data().used
+    );
+}
+
+function CheckExis(key) {
+    let array = [];
+    firestore.collection('Address').get((doc) => {
+        if (!doc.empty) {
+            doc.forEach(docs => {
+                array.push(docs.id);
+            });
+            return array.indexOf(key) != -1 ? true : false;
+        }
+    });
+}
 const createAddress = async(req, res, next) => {
 
     try {
@@ -16,11 +40,12 @@ const createAddress = async(req, res, next) => {
         const data = req.body;
 
         const docmentred = await firestore.collection('Address');
-
-        await docmentred.add(data).then((snapshot) => {
-
-            const id = snapshot.id;
-            docmentred.doc(id).get()
+        let uuid = uuidv4();
+        while (CheckExis(uuid)) {
+            uuid = uuidv4();
+        }
+        await docmentred.doc(uuid).set(data).then(() => {
+            docmentred.doc(uuid).get()
                 .then((snap) => {
 
                     if (!snap.exists) {
@@ -28,15 +53,7 @@ const createAddress = async(req, res, next) => {
                         return res.status(404).json({ msg: 'No record found' });
                     } else {
 
-                        const Address = new Addresss(
-                            snap.id,
-                            snap.data().CusId,
-                            snap.data().Fullname,
-                            snap.data().PhoneNum,
-                            snap.data().Stage,
-                            snap.data().Address,
-                            snap.data().used
-                        );
+                        const Address = CreateObject(snap);
 
                         return res.status(200).json({ status: "Success", msg: "Create Address success !", dataObject: Address });
                     }
@@ -67,15 +84,7 @@ const getAllAddress = async(req, res, next) => {
 
                     snap.forEach(doc => {
 
-                        const Address = new Addresss(
-                            doc.id,
-                            doc.data().CusId,
-                            doc.data().Fullname,
-                            doc.data().PhoneNum,
-                            doc.data().Stage,
-                            doc.data().Address,
-                            doc.data().used
-                        );
+                        const Address = CreateObject(doc);
 
                         AddressArray.push(Address);
 
@@ -106,15 +115,7 @@ const getOneAddress = async(req, res, next) => {
                 return res.status(404).json({ status: "Fails", msg: 'No record found' });
             } else {
 
-                const Address = new Addresss(
-                    snap.id,
-                    snap.data().CusId,
-                    snap.data().Fullname,
-                    snap.data().PhoneNum,
-                    snap.data().Stage,
-                    snap.data().Address,
-                    snap.data().used
-                );
+                const Address = CreateObject(snap);
 
                 return res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: Address });
 
@@ -130,10 +131,13 @@ const getOneAddress = async(req, res, next) => {
 
 const getUsedAddress = async(req, res, next) => {
     try {
-
+        const userId = req.params.userId;
         const Address = await firestore.collection('Address');
         // ------------------------------------------------------
-        await Address.where('used', '==', true).get()
+        await Address
+            .where('CusId', "==", userId)
+            .where('used', '==', true)
+            .get()
             .then((snap) => {
 
                 if (snap.empty) {
@@ -141,15 +145,7 @@ const getUsedAddress = async(req, res, next) => {
                 } else {
                     var Address = null;
                     snap.forEach(doc => {
-                        Address = new Addresss(
-                            doc.id,
-                            doc.data().CusId,
-                            doc.data().Fullname,
-                            doc.data().PhoneNum,
-                            doc.data().Stage,
-                            doc.data().Address,
-                            doc.data().used
-                        );
+                        Address = CreateObject(doc);
                     });
 
                     return res.status(200).json({ status: "Success", msg: "Get Data Successfully", dataObject: Address });

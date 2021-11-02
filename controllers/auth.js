@@ -10,7 +10,7 @@ const firestore = firebase_admin.firestore();
 const Config = require('../config');
 const jwt = require("jsonwebtoken");
 const express = require("express");
-const bcrypt = require("bcrypt");
+var CryptoJS = require("crypto-js");
 const Users = require('..//models//User');
 const fs = require('fs');
 
@@ -19,13 +19,54 @@ var sub = "trungksdoa@gmail.com";
 var aud = "https://www.facebook.com/HoangTrung194499/";
 var exp = "60s";
 
+var signOption = {
+    issuer: iss,
+    subject: sub,
+    audience: aud,
+    expiresIn: exp,
+    algorithm: 'RS256'
+};
 
 var iss2 = "VoHoangTrung";
 var sub2 = "trungksdoa@gmail.com";
 var aud2 = "https://www.facebook.com/HoangTrung194499/";
 var exp2 = "7d";
-// ------------------------------------------------------------------------
-// ===========================Token================================
+
+
+var signOption2 = {
+    issuer: iss2,
+    subject: sub2,
+    audience: aud2,
+    expiresIn: exp2,
+    algorithm: 'RS256'
+};
+
+var iss3 = "VoHoangTrung";
+var sub3 = "trungksdoa@gmail.com";
+var aud3 = "https://www.facebook.com/HoangTrung194499/";
+var exp3 = "24h";
+
+var signOption3 = {
+    issuer: iss3,
+    subject: sub3,
+    audience: aud3,
+    expiresIn: exp3,
+    algorithm: 'RS256'
+};
+
+var iss4 = "VoHoangTrung";
+var sub4 = "trungksdoa@gmail.com";
+var aud4 = "https://www.facebook.com/HoangTrung194499/";
+var exp4 = "7d";
+
+var signOption4 = {
+    issuer: iss4,
+    subject: sub4,
+    audience: aud4,
+    expiresIn: exp4,
+    algorithm: 'RS256'
+};
+
 // ------------------------------------------------------------------------
 
 // ---------------------Key------------------------
@@ -45,7 +86,7 @@ var publicTkKey = fs.readFileSync('public.key');
 
 var publicRfKey = fs.readFileSync('RfPublic.key');
 // -------------------End--------------------------
-
+const { v4: uuidv4 } = require('uuid');
 // ----------------------------------------------
 
 function CheckIsAdmin(array) {
@@ -60,6 +101,18 @@ function CheckIsAdmin(array) {
     }
 }
 
+function CreateObject(data) {
+    return new Users(
+        data.id,
+        data.data().username,
+        data.data().email,
+        data.data().password,
+        data.data().roles,
+        data.data().dateCreated,
+    );
+}
+// ------------------------------------------------------------------------
+
 const Login = async(req, res, next) => {
     try {
 
@@ -68,87 +121,40 @@ const Login = async(req, res, next) => {
 
         // const data = await firestore.collection('User').where('email', '==', email).get();
 
-        await firestore.collection('User').where('email', '==', email).get()
-            .then((snapshot) => {
-                if (snapshot.empty) {
-                    return res.status(404).json({ status: "Fails", msg: 'Login fails,No account found' });
+        await firestore.collection('User').where('email', '==', email).get().then(async(respones) => {
+            if (respones.empty) {
+                return res.status(404).json({ status: "Fails", msg: 'Login fails,No account found' });
+            } else {
+                let user = "";
+                respones.forEach((doc) => {
+                    user = CreateObject(doc);
+                });
+                jsonString = JSON.stringify(user);
+                Usersdata = JSON.parse(jsonString);
+                var bytes = CryptoJS.Rabbit.decrypt(Usersdata.password, Config.KeyEncrypt);
+                var originalPass = bytes.toString(CryptoJS.enc.Utf8);
+                if (originalPass != password) {
+                    return res.status(500).json({ status: "Fails", msg: "Password invalid" });
                 } else {
-                    let user = "";
-                    snapshot.forEach((doc) => {
-                        user = new Users(
-                            doc.id,
-                            doc.data().username,
-                            doc.data().email,
-                            doc.data().password,
-                            doc.data().roles,
-                            doc.data().dateCreated,
-                        );
-                    });
-                    jsonString = JSON.stringify(user);
+                    var Username = Usersdata.username;
 
-                    data_when_parse = JSON.parse(jsonString);
-
-                    var Username = data_when_parse.username;
-
-                    const valid = bcrypt.compare(password, data_when_parse.password);
-                    if (!valid) { return res.json({ password: "Password invalid", error: "Invalid email or password." }) };
                     // -----------------------
                     var payload = {};
-                    payload.id = data_when_parse.id;
+                    payload.id = Usersdata.id;
 
                     payload.username = Username;
 
-                    payload.roles = data_when_parse.roles;
+                    payload.roles = Usersdata.roles;
 
-                    var signOption = {
-                        issuer: iss,
-                        subject: sub,
-                        audience: aud,
-                        expiresIn: exp,
-                        algorithm: 'RS256'
-                    };
+                    var token = null;
+                    if (CheckIsAdmin(Usersdata.roles)) {
 
-                    var signOption2 = {
-                        issuer: iss2,
-                        subject: sub2,
-                        audience: aud2,
-                        expiresIn: exp2,
-                        algorithm: 'RS256'
-                    };
 
-                    if (CheckIsAdmin(data_when_parse.roles)) {
-
-                        var iss3 = "VoHoangTrung";
-                        var sub3 = "trungksdoa@gmail.com";
-                        var aud3 = "https://www.facebook.com/HoangTrung194499/";
-                        var exp3 = "24h";
-
-                        var signOption3 = {
-                            issuer: iss3,
-                            subject: sub3,
-                            audience: aud3,
-                            expiresIn: exp3,
-                            algorithm: 'RS256'
-                        };
-
-                        var iss4 = "VoHoangTrung";
-                        var sub4 = "trungksdoa@gmail.com";
-                        var aud4 = "https://www.facebook.com/HoangTrung194499/";
-                        var exp4 = "7d";
-
-                        var signOption4 = {
-                            issuer: iss4,
-                            subject: sub4,
-                            audience: aud4,
-                            expiresIn: exp4,
-                            algorithm: 'RS256'
-                        };
-
-                        var token = jwt.sign(payload, privateTKKey, signOption3);
+                        token = jwt.sign(payload, privateTKKey, signOption3);
 
                         const Refreshtoken = jwt.sign(payload, privateRfKey, signOption4);
                         const requestDatas = {
-                            id: data_when_parse.id,
+                            id: Usersdata.id,
                             status: "Success",
                             msg: "Welcome back my Boss ,Have a nine day",
                             token: token,
@@ -157,41 +163,50 @@ const Login = async(req, res, next) => {
                             email: email,
                             Roles: "admin"
                         };
-                        let date_ob = new Date();
+                        return res.status(200).json({ status: "Success", msg: "Login success !", dataObject: requestDatas });
+                    } else {
+                        token = jwt.sign(payload, privateTKKey, signOption);
+
+                        const Refreshtoken = jwt.sign(payload, privateRfKey, signOption2);
+                        const requestDatas = {
+                            id: Usersdata.id,
+                            status: "Success",
+                            msg: "Welcome back user ,Have a nine day",
+                            token: token,
+                            Refreshtoken: Refreshtoken,
+                            username: Username,
+                            email: email,
+                            Roles: "user"
+                        };
                         return res.status(200).json({ status: "Success", msg: "Login success !", dataObject: requestDatas });
                     }
-                    var token = jwt.sign(payload, privateTKKey, signOption);
-
-                    const Refreshtoken = jwt.sign(payload, privateRfKey, signOption2);
-                    const requestDatas = {
-                        id: data_when_parse.id,
-                        status: "Success",
-                        msg: "Welcome back user ,Have a nine day",
-                        token: token,
-                        Refreshtoken: Refreshtoken,
-                        username: Username,
-                        email: email,
-                        Roles: "user"
-                    };
-                    return res.status(200).json({ status: "Success", msg: "Login success !", dataObject: requestDatas });
                 }
-            })
-            .catch((err) => {
-                console.log('Error getting documents', err);
-                return res.send(err);
-            });
-
+            }
+        }).catch((err) => {
+            console.log(err)
+            return res.send(err);
+        });
     } catch (error) {
         return res.status(400).send(error.message);
     }
 };
 
+function CheckExis(key) {
+    let array = [];
+    firestore.collection('User').get((doc) => {
+        if (!doc.empty) {
+            doc.forEach(docs => {
+                array.push(docs.id);
+            });
+            return array.indexOf(key) != -1 ? true : false;
+        }
+    });
+}
 
 const Register = async(req, res, next) => {
     try {
 
         const data = req.body;
-
         await firestore.collection('User').where('email', '==', data.email).get().then(async(snapshot) => {
             if (!snapshot.empty) {
                 return res.status(200).json({
@@ -199,27 +214,30 @@ const Register = async(req, res, next) => {
                     msg: "Email already exists in system",
                 });
             } else {
-                const salt = await bcrypt.genSalt(20);
-                // now we set user password to hashed password
-                let newPassword = data.password.toString();
 
-                const newpass = await bcrypt.hash(newPassword, salt);
+                var ciphertext = CryptoJS.Rabbit.encrypt(data.password, Config.KeyEncrypt).toString();
+
+                // // now we set user password to hashed password
+                const newpass = ciphertext;
                 let date_ob = new Date();
 
-                var dataobj = {
+                let dataobj = {
                     username: data.username,
                     email: data.email,
                     password: newpass,
                     roles: data.roles,
-                    dateCreated: date_ob.getTime()
+                    dateCreated: date_ob.toLocaleDateString()
+                };
+                let uuid = uuidv4();
+                while (CheckExis(uuid)) {
+                    uuid = uuidv4();
                 }
-                const docmentred = firestore.collection('User').add(dataobj);
-                return res.status(200).json({
-                    status: "Success",
-                    msg: "Register success",
+                firestore.collection('User').doc(uuid).set(dataobj).then(() => {
+                    return res.status(200).json({
+                        status: "Success",
+                        msg: "Register success",
+                    });
                 });
-
-
             }
         }).catch((err) => {
             console.log(err)
@@ -284,14 +302,7 @@ const FindALl = async(req, res, next) => {
                     });
                 } else {
                     snapshot.forEach((doc) => {
-                        const user = new Users(
-                            doc.id,
-                            doc.data().username,
-                            doc.data().email,
-                            doc.data().password,
-                            doc.data().roles,
-                            doc.data().dateCreated,
-                        );
+                        let user = CreateObject(doc);
                         useraray.push(user);
                     });
                     return res.status(200).json({ status: "Success", msg: "Get All Data Successfully", dataList: useraray });
@@ -327,14 +338,7 @@ const getOne = async(req, res, next) => {
                 });
                 // --------------------------------------------------------------
             } else {
-                const User = new Users(
-                    snapshot.id,
-                    snapshot.data().username,
-                    snapshot.data().email,
-                    snapshot.data().password,
-                    snapshot.data().roles,
-                    snapshot.data().dateCreated,
-                );
+                let user = CreateObject(snapshot);
                 // --------------------------------------------------------------
                 return res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: User });
                 // --------------------------------------------------------------

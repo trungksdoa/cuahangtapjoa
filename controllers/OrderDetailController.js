@@ -8,7 +8,28 @@ const OrderDetails = require('../models/OrderDetail');
 // const firestore = firebase.firestore();
 // --------------------------------------------------------------
 const firestore = firebase_admin.firestore();
+
+const { v4: uuidv4 } = require('uuid');
 // --------------------------------------------------------------
+function CreateObject(snapshot) {
+    return new OrderDetails(
+        snapshot.id,
+        snapshot.data().OrderID,
+        snapshot.data().ItemOrder
+    );
+}
+
+function CheckExis(key) {
+    let array = [];
+    firestore.collection('OrderDetail').get((doc) => {
+        if (!doc.empty) {
+            doc.forEach(docs => {
+                array.push(docs.id);
+            });
+            return array.indexOf(key) != -1 ? true : false;
+        }
+    });
+}
 const createOrderDetail = async(req, res, next) => {
 
     try {
@@ -17,22 +38,23 @@ const createOrderDetail = async(req, res, next) => {
         // --------------------------------------------------------------
         const docmentred = await firestore.collection('OrderDetail');
         // --------------------------------------------------------------
+        let uuid = uuidv4();
+        while (CheckExis(uuid)) {
+            uuid = uuidv4();
+        }
+
         await docmentred
-            .add(data)
-            .then((snapshot) => {
-                const id = snapshot.id;
+            .doc(uuid)
+            .set(data)
+            .then(() => {
                 // --------------------------------------------------------------
                 docmentred
-                    .doc(id)
+                    .doc(uuid)
                     .get()
                     .then((snapshot) => {
                         if (snapshot.exists) {
                             // --------------------------------------------------------------
-                            const OrderDetail = new OrderDetails(
-                                snapshot.id,
-                                snapshot.data().OrderID,
-                                snapshot.data().ItemOrder
-                            );
+                            const OrderDetail = CreateObject(snapshot);
                             // --------------------------------------------------------------
                             return res.status(200).json({ status: "Success", msg: "Create OrderDetail success !", dataObject: OrderDetail });
                             // --------------------------------------------------------------
@@ -71,11 +93,7 @@ const getAllOrderDetail = async(req, res, next) => {
                     // --------------------------------------------------------------
                     data.forEach(doc => {
                         // --------------------------------------------------------------
-                        const OrderDetail = new OrderDetails(
-                            doc.id,
-                            doc.data().OrderID,
-                            doc.data().ItemOrder
-                        );
+                        const OrderDetail = CreateObject(doc);
                         // --------------------------------------------------------------
                         OrderDetailArray.push(OrderDetail);
                         // --------------------------------------------------------------
@@ -111,11 +129,7 @@ const getOneOrderDetail = async(req, res, next) => {
                     });
                     // --------------------------------------------------------------
                 } else {
-                    const OrderDetail = new OrderDetails(
-                        data.id,
-                        data.data().OrderID,
-                        data.data().ItemOrder
-                    );
+                    const OrderDetail = CreateObject(data);
                     // --------------------------------------------------------------
                     return res.status(200).json({ status: "Success", msg: "Found record with ID:  " + id + "", dataObject: OrderDetail });
                     // --------------------------------------------------------------
@@ -150,11 +164,7 @@ const getOneOrderDetailByOrder = async(req, res, next) => {
                     var OrderDetail = null;
                     data.forEach(doc => {
                         // --------------------------------------------------------------
-                        OrderDetail = new OrderDetails(
-                            doc.id,
-                            doc.data().OrderID,
-                            doc.data().ItemOrder
-                        );
+                        OrderDetail = CreateObject(doc);
                         // --------------------------------------------------------------
                         // --------------------------------------------------------------
                     });

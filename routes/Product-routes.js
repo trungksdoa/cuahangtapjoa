@@ -4,7 +4,8 @@ const {
     getAllProduct,
     getOneProduct,
     UpdateProduct,
-    deleteProduct
+    deleteProduct,
+    getProductByCata
 } = require('../controllers/ProductController');
 const auth = require("../middleware/auth");
 const { admin, user } = require("../middleware/roles");
@@ -13,10 +14,12 @@ const router = express.Router();
 router.post('/product', createProduct);
 // ----------------------------------------------------------------------
 
-router.get('/products', [auth, user], getAllProduct);
+router.get('/products', getAllProduct);
+
+router.get('/product/getProductByCata/:cataId', getProductByCata);
 // ----------------------------------------------------------------------
 
-router.get('/product/:id', [auth, user], getOneProduct);
+router.get('/product/:id', getOneProduct);
 // ----------------------------------------------------------------------
 
 router.put('/product/:id', [auth, admin], UpdateProduct);

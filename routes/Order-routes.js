@@ -4,19 +4,21 @@ const auth = require("../middleware/auth");
 const { admin, user } = require("../middleware/roles");
 const router = express.Router();
 // [auth, admin],
-router.post('/Order', order.createOrder);
+router.post('/Order', [auth, user], order.createOrder);
 // ----------------------------------------------------------------------
 
 router.get('/Orders', order.getAllOrder);
 // ----------------------------------------------------------------------
-
-router.get('/Order/:id', order.getOneOrder);
+router.get('/getAllOrderByCus/:userId', [auth, user], order.getAllOrderByCus);
 // ----------------------------------------------------------------------
 
-router.put('/Order/:id', order.UpdateOrder);
+router.get('/Order/:id', [auth, user], order.getOneOrder);
 // ----------------------------------------------------------------------
 
-router.delete('/Order/:id', order.deleteOrder);
+router.put('/Order/:id', [auth, admin], order.UpdateOrder);
+// ----------------------------------------------------------------------
+
+router.delete('/Order/:id', [auth, admin], order.deleteOrder);
 // ----------------------------------------------------------------------
 
 

@@ -5,33 +5,33 @@ const { admin, user } = require("../middleware/roles");
 const router = express.Router();
 // , [auth, user], [auth, admin]
 
-router.post('/Address', address.createAddress);
+router.post('/Address', [auth, user], address.createAddress);
 // ----------------------------------------------------------------------
 
-router.get('/Addresss', address.getAllAddress);
+router.get('/Addresss', [auth, user], address.getAllAddress);
 // ----------------------------------------------------------------------
 
-router.get('/Address/:id', address.getOneAddress);
-
-// ----------------------------------------------------------------------
-
-router.get('/getAllByCus/:id', address.GetAllDataBycus);
+router.get('/Address/:id', [auth, user], address.getOneAddress);
 
 // ----------------------------------------------------------------------
 
-router.get('/getUsedAddress/', address.getUsedAddress);
+router.get('/getAddressAllByCus/:id', [auth, user], address.GetAllDataBycus);
 
 // ----------------------------------------------------------------------
 
-router.put('/Address/:id', address.UpdateAddress);
+router.get('/getUsedAddress/:userId', [auth, user], address.getUsedAddress);
 
 // ----------------------------------------------------------------------
 
-router.put('/Address/:id/:userId', address.UsedAddress);
+router.put('/Address/:id', [auth, user], address.UpdateAddress);
 
 // ----------------------------------------------------------------------
 
-router.delete('/Address/:id', address.deleteAddress);
+router.put('/Address/:id/:userId', [auth, user], address.UsedAddress);
+
+// ----------------------------------------------------------------------
+
+router.delete('/Address/:id', [auth, user], address.deleteAddress);
 // ----------------------------------------------------------------------
 
 

@@ -4,7 +4,7 @@ const auth = require("../middleware/auth");
 const { admin, user } = require("../middleware/roles");
 const router = express.Router();
 // [auth, admin],
-router.post('/Orderdetail', orderdetail.createOrderDetail);
+router.post('/Orderdetail', [auth, user], orderdetail.createOrderDetail);
 // ----------------------------------------------------------------------
 
 router.get('/Orderdetails', orderdetail.getAllOrderDetail);
@@ -12,13 +12,13 @@ router.get('/Orderdetails', orderdetail.getAllOrderDetail);
 
 router.get('/Orderdetail/:id', orderdetail.getOneOrderDetail);
 // ----------------------------------------------------------------------
-router.get('/OrderdetailByOrder/:OrderID', orderdetail.getOneOrderDetailByOrder);
+router.get('/OrderdetailByOrder/:OrderID', [auth, user], orderdetail.getOneOrderDetailByOrder);
 // ----------------------------------------------------------------------
 
-router.put('/Orderdetail/:id', orderdetail.UpdateOrderDetail);
+router.put('/Orderdetail/:id', [auth, admin], orderdetail.UpdateOrderDetail);
 // ----------------------------------------------------------------------
 
-router.delete('/Orderdetail/:id', orderdetail.deleteOrderDetail);
+router.delete('/Orderdetail/:id', [auth, admin], orderdetail.deleteOrderDetail);
 // ----------------------------------------------------------------------
 
 
