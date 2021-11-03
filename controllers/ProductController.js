@@ -8,6 +8,8 @@ const Products = require('../models/Product');
 
 const { v4: uuidv4 } = require('uuid');
 
+const admin = require('firebase-admin')
+
 // const firestore = firebase.firestore();
 // --------------------------------------------------------------
 const firestore = firebase_admin.firestore();
@@ -190,6 +192,42 @@ const getProductByCata = async(req, res, next) => {
         // --------------------------------------------------------------
     }
 };
+
+// --------------------------------------------------------------
+const CheckrProductOnStock = async(req, res, next) => {
+    try {
+        // --------------------------------------------------------------
+        const data = req.body;
+
+        console.log(data);
+        // --------------------------------------------------------------
+        await firestore.collection('Product').where(admin.firestore.FieldPath.documentId(), 'in', data.Proid).get().then((snapp) => {
+            if (snapp.empty) {
+                return res.status(404).json({
+                    status: "Fails",
+                    msg: 'No record found',
+                });
+            } else {
+
+                const ProductArray = [];
+                snapp.forEach(doc => {
+                    const product = CreateObject(doc);
+                    // --------------------------------------------------------------
+                    ProductArray.push(product);
+                });
+                // --------------------------------------------------------------
+                return res.status(200).json({ status: "Success", msg: "Found Success", dataList: ProductArray });
+            }
+        }).catch((err) => {
+            console.log(err);
+            return res.send(err);
+        });
+    } catch (error) {
+        // --------------------------------------------------------------
+        return res.status(400).send(error.message);
+        // --------------------------------------------------------------
+    }
+};
 // --------------------------------------------------------------
 const UpdateProduct = async(req, res, next) => {
     try {
@@ -273,6 +311,7 @@ module.exports = {
     getOneProduct,
 
     getProductByCata,
+    CheckrProductOnStock,
     // --------------------------------------------------------------
     UpdateProduct,
     // --------------------------------------------------------------

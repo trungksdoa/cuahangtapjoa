@@ -210,6 +210,43 @@ const getOneLike = async(req, res, next) => {
         // --------------------------------------------------------------
     }
 };
+
+const SearchLikeByProIdAndCusID = async(req, res, next) => {
+    try {
+        // --------------------------------------------------------------
+        const id = req.params.id;
+        const CusId = req.params.CusId;
+        // --------------------------------------------------------------
+        const Like = await firestore.collection('Likes')
+            .where("productId", "==", id)
+            .where("CusId", "==", CusId);
+        // --------------------------------------------------------------
+        const data = await Like.get().then((snapp) => {
+            if (snapp.empty) {
+                return res.status(404).json({
+                    status: "Fails",
+                    msg: 'No record found',
+                });
+            } else {
+                let Like = null;
+                snapp.forEach(doc => {
+                    // --------------------------------------------------------------
+                    Like = CreateObject(doc);
+                    // --------------------------------------------------------------
+                });
+                // --------------------------------------------------------------
+                return res.status(200).json({ status: "Success", msg: "Search Success", dataObject: Like });
+            }
+        }).catch((err) => {
+            console.log(err);
+            return res.send(err);
+        });
+    } catch (error) {
+        // --------------------------------------------------------------
+        return res.status(400).send(error.message);
+        // --------------------------------------------------------------
+    }
+};
 // --------------------------------------------------------------
 const UpdateLike = async(req, res, next) => {
     try {
@@ -262,7 +299,7 @@ const deleteLike = async(req, res, next) => {
                         newId = doc.id;
                     });
                     firestore.collection('Likes').doc(newId).delete().then(() => {
-                        return res.status(200).json({ status: "Success", msg: "Delete record with ID:  " + id + "" });
+                        return res.status(200).json({ status: "Success", msg: "Delete Success" });
                     });
                     // --------------------------------------------------------------
                 } else {
@@ -296,6 +333,7 @@ module.exports = {
     getAllLikeByCus,
     deleteLike,
     getOneLike,
-    getAllMostLike
+    getAllMostLike,
+    SearchLikeByProIdAndCusID
     // --------------------------------------------------------------
 };

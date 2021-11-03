@@ -14,6 +14,8 @@ router.delete('/Like/:id', [auth, user], Likes.deleteLike);
 router.get('/Like/:id', [auth, user], Likes.getOneLike);
 
 router.get('/LikesMost', Likes.getAllMostLike);
+
+router.get('/SearchLikeByProIdAndCusID/:id/:CusId', [auth, user], Likes.SearchLikeByProIdAndCusID);
 module.exports = {
     routes: router
 }

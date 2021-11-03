@@ -5,6 +5,7 @@ const {
     getOneProduct,
     UpdateProduct,
     deleteProduct,
+    CheckrProductOnStock,
     getProductByCata
 } = require('../controllers/ProductController');
 const auth = require("../middleware/auth");
@@ -17,6 +18,8 @@ router.post('/product', createProduct);
 router.get('/products', getAllProduct);
 
 router.get('/product/getProductByCata/:cataId', getProductByCata);
+
+router.post('/CheckrProductOnStock', CheckrProductOnStock);
 // ----------------------------------------------------------------------
 
 router.get('/product/:id', getOneProduct);
